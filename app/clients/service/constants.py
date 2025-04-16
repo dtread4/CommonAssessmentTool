@@ -43,8 +43,9 @@ INTERVENTION_NAMES = {
     "life_stabilization": "Life Stabilization Services",
     "retention_services": "Retention Services",
     "specialized_services": "Specialized Services",
-    "employment_related_financial_supports":\
-        "Employment-Related Financial Supports for Job Seekers and Employers",
+    "employment_related_financial_supports": (
+        "Employment-Related Financial Supports for Job Seekers and Employers"
+    ),
     "employer_financial_supports": "Employer Financial Supports",
     "enhanced_referrals": "Enhanced Referrals for Skills Development"
 }
