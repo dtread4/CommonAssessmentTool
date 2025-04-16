@@ -20,10 +20,10 @@ import pandas as pd
 # from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from app.clients.service.constants import COLUMNS_FIELDS, INTERVENTION_FIELDS
+from app.clients.service.ml_model_manager import MLModelRepository
 from .ml_models import (
     InterfaceBaseMLModel,
     LinearRegressionModel,
-    MLModelRepository,
     RandomForestModel,
     SVMModel,
 )

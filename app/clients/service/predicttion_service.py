@@ -18,8 +18,9 @@ def convert_prediction_input_to_client_base(
     for field, value in input_data.dict().items():
         if field == "gender":
             # Convert gender string to Gender enum
-            client_dict[field] = Gender.MALE if value.lower() in ["male", "m",
-                                                                  "1"] else Gender.FEMALE
+            client_dict[field] = Gender.MALE if value.lower() \
+                                                in ["male", "m",
+                                                    "1"] else Gender.FEMALE
 
         elif field in BOOL_FIELDS:
             # Convert string booleans to actual booleans
@@ -112,9 +113,7 @@ def predict_with_interventions(
 
         # Create list of intervention names for this combination
         intervention_names_list = [INTERVENTION_NAMES[intervention] for
-                                   intervention in combo.keys()]
-
-        # Add to results
+                                   intervention in combo]
         interventions_results.append([
             round(combo_score, 2),  # 2 decimal place
             intervention_names_list
