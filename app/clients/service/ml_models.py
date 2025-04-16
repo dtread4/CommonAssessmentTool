@@ -106,7 +106,7 @@ class SVMModel(InterfaceBaseMLModel):
         return self.model.predict(features)
 
     def __str__(self):
-        return "SVM3"
+        return "Support Vector Machine"
 
     def load_if_trained(self):
         path = get_true_file_name(str(self), default_unformatted_model_path)
