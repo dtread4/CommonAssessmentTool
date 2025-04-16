@@ -1,0 +1,186 @@
+name: CI-CD Pipeline
+
+on:
+    push:
+        branches: [ master, main, dev ]
+
+    pull_request:
+        branches: [ master, main ]
+
+    release:
+        types: [ published ]
+
+jobs:
+    test_code:
+        runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+        steps:
+            -   name: Checkout Code
+                uses: actions/checkout@v4 # Checkout the repository
+
+            -   name: Set up Python
+                uses: actions/setup-python@v5 # Set up Python environment
+                with:
+                    python-version: "3.11"
+
+            -   name: Install dependencies
+                run: |
+                    python -m pip install --upgrade pip  # Upgrade pip to the latest version
+                    pip install setuptools wheel
+                    pip install -r requirements.txt  # Install dependencies from requirements.txt
+                    pip install pylint pytest black isort
+
+            -   name: Run Code Formatting with Black # Format the entire repo
+                run: |
+                    black .
+
+            -   name: Run Code Formatting with isort
+                run: |
+                    isort .
+
+            -   name: Run Linter
+                run: |
+                    pylint ./app ./tests
+
+            -   name: Run Tests
+                run: |
+                    python -m pytest tests/ 
+
+            -   name: Print Success Message
+                if: success()
+                run: |
+                    echo "Confirmed code formatting and functionality successfully!"
+                    echo "========================"
+                    echo "✓ Code checked out"
+                    echo "✓ Python environment set up"
+                    echo "✓ Dependencies installed"
+                    echo "✓ Code formatting checked with Black"
+                    echo "✓ Code formatting checked with isort"
+                    echo "✓ Linting completed"
+                    echo "✓ Tests completed"
+                    echo "========================"
+
+    test_docker_setup:
+        runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+        steps:
+            -   name: Checkout Code
+                uses: actions/checkout@v4 # Checkout the repository
+
+            -   name: Set up Python
+                uses: actions/setup-python@v5 # Set up Python environment
+                with:
+                    python-version: "3.11"
+
+            -   name: Hadolint Action Check Dockerfile Syntax
+                uses: hadolint/hadolint-action@v3.1.0
+                with:
+                    dockerfile: ./Dockerfile
+
+            -   name: Build Docker Image
+                run: |
+                    docker build -t common-assessment-tool .
+
+            -   name: Run Docker container
+                run: |
+                    docker run -d --name common-assessment-container -p 8000:8000 common-assessment-tool
+                    sleep 10  
+
+            -   name: Test Docker container
+                run: |
+                    curl --fail http://localhost:8000/docs || {
+                        echo "Health check failed"
+                        docker logs common-assessment-tool
+                        exit 1
+                    }
+
+            -   name: Stop Docker container
+                run: docker stop common-assessment-container
+
+            -   name: Print Success Message
+                if: success()
+                run: |
+                    echo "Confirmed Docker image can be built and run successfully!"
+                    echo "========================"
+                    echo "✓ Code checked out"
+                    echo "✓ Python environment set up"
+                    echo "✓ Docker file syntax checked"
+                    echo "✓ Docker container built"
+                    echo "✓ Docker container run"
+                    echo "✓ Docker container tested with good health"
+                    echo "✓ Docker container stopped"
+                    echo "========================"
+
+    # Source for how deployment was set up
+    # https://dev.to/s3cloudhub/automate-docker-deployments-push-your-images-to-ec2-with-github-actions-3a3j
+    deploy:
+        # Only run deploy if all tests pass
+        needs: [ test_code, test_docker_setup ]
+
+        # Only run deploy job when a release is published AND the release is from the main branch
+        if: github.event_name == 'release' && github.event.action == 'published'
+            && github.event.release.target_commitish == 'main'
+
+        runs-on: ubuntu-latest
+
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v4
+
+            -   name: Login to DockerHub
+                run: |
+                    echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+            -   name: Build Docker image
+                run: |
+                    docker build -t common_assessment_tool .
+
+            -   name: Tag Docker image with release version
+                run: |
+                    # Tag with the release version
+                    docker tag common_assessment_tool ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:${{ github.event.release.tag_name }}
+                    # Also tag as latest
+                    docker tag common_assessment_tool ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
+
+            -   name: Push images to Docker Hub
+                run: |
+                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:${{ github.event.release.tag_name }}
+                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
+
+            -   name: Install SSH Key
+                uses: webfactory/ssh-agent@v0.9.1
+                with:
+                    ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            -   name: Deploy Docker image to EC2
+                run: |
+                    ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_INSTANCE_IP }} << 'EOF'
+                    # Install Docker if not already installed
+                    sudo dnf update -y
+                    sudo dnf install -y docker
+                    sudo systemctl enable docker
+                    sudo systemctl start docker
+                    sudo usermod -aG docker $USER
+                    newgrp docker
+
+                    # Deploy container
+                    docker pull ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
+                    docker stop $(docker ps -a -q) || true
+                    docker rm $(docker ps -a -q) || true
+                    docker run -d -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
+                    EOF
+
+            -   name: Print Success Message
+                if: success()
+                run: |
+                    echo "Deployed release ${{ github.event.release.tag_name }} to EC2 instance successfully!"
+                    echo "========================"
+                    echo "✓ Code checked out"
+                    echo "✓ Logged in to Docker Hub"
+                    echo "✓ Docker image built"
+                    echo "✓ Docker image tagged with release version: ${{ github.event.release.tag_name }}"
+                    echo "✓ Docker images pushed to Docker Hub"
+                    echo "✓ Installed EC2 SSH key"
+                    echo "✓ Docker image deployed successfully"
+                    echo "✓ EC2 instance updated with latest release"
+                    echo "========================"

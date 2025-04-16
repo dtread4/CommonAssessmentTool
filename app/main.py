@@ -18,7 +18,7 @@ models.Base.metadata.create_all(bind=engine)
 
 # Create FastAPI application
 app = FastAPI(
-    title="Case Management API", description="API for managing client cases", version="1.0.0"
+    title="Case Management API", description="API for managing client cases", version="0.1.1"
 )
 
 # Include routers

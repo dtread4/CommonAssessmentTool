@@ -8,3 +8,5 @@ services:
         - action: sync
           path: .
           target: /code
+  app:
+    env_file: .env

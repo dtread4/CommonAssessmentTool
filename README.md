@@ -24,7 +24,7 @@ This also has an API file to interact with the front end, and logic in order to 
 
 2. Create a .env file with the following fields:
 ```markdown
-SECRET_KEY = "your-secret-key-here"
+SECRET_KEY = "<your-secret-key-here>"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 ```
@@ -75,11 +75,19 @@ docker build -t common_assessment_tool .
 docker run --rm -p 8000:8000 common_assessment_tool
 ```
 6. Follow the steps to run the Swagger UI as described above (clicking link in step 5 should take you to the UI)
-7. To run using Docker-Compose, run the command below in the CommonAssessmentTool repo's directory
+7. To run using Docker-Compose in the foreground, run the command below in the CommonAssessmentTool repo's directory
 ```
 docker compose up
+```
+8. To run using Docker-Compose in the background, run the command below in the CommonAssessmentTool repo's directory
+```
+docker compose up -d
+```
+9. If running using the background command, you can stop the container gracefully with the following command:
+```
+docker compose stop
 ```
 
 ## Access public address
 Backend application is now deployed to the AWS Cloud. 
-Access the backend application from the endpoint by clicking: http://ec2-54-165-172-227.compute-1.amazonaws.com:8000/docs
+Access the backend application from the endpoint by clicking: http://ec2-18-204-133-53.compute-1.amazonaws.com:8000/docs
