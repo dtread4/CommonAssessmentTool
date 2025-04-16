@@ -25,12 +25,50 @@ COLUMNS_FIELDS = [
     "need_mental_health_support_bool",  # Needs mental health support (bool)
 ]
 
+BOOL_FIELDS = [
+    "canada_born", "citizen_status", "fluent_english",
+    "transportation_bool", "caregiver_bool", "felony_bool",
+    "attending_school", "currently_employed", "substance_use",
+    "need_mental_health_support_bool"
+]
+
 INTERVENTION_FIELDS = [
-    "employment_assistance",
-    "life_stabilization",
-    "retention_services",
-    "specialized_services",
-    "employment_related_financial_supports",
-    "employer_financial_supports",
-    "enhanced_referrals"
+    "employment_assistance", "life_stabilization", "retention_services",
+    "specialized_services", "employment_related_financial_supports",
+    "employer_financial_supports", "enhanced_referrals"
+]
+
+INTERVENTION_NAMES = {
+    "employment_assistance": "General Employment Assistance Services",
+    "life_stabilization": "Life Stabilization Services",
+    "retention_services": "Retention Services",
+    "specialized_services": "Specialized Services",
+    "employment_related_financial_supports": "Employment-Related Financial Supports for Job Seekers and Employers",
+    "employer_financial_supports": "Employer Financial Supports",
+    "enhanced_referrals": "Enhanced Referrals for Skills Development"
+}
+
+FIELDS_WITH_LOW_AT_ONE = {"level_of_schooling", "housing", "income_source"}
+
+DEFAULT_INTERVENTION_COMBINATIONS = [
+    {"employer_financial_supports": True},
+    # Combination 1
+    {
+        "retention_services": True,
+        "enhanced_referrals": True
+    },
+
+    # Combination 2
+    {
+        "retention_services": True,
+        "employment_related_financial_supports": True,
+        "enhanced_referrals": True
+    },
+    # Combination 3
+    {
+        "employment_assistance": True,
+        "retention_services": True,
+        "employment_related_financial_supports": True,
+        "enhanced_referrals": True
+    }
 ]

@@ -1,65 +1,48 @@
-import numpy as np
-from fastapi import APIRouter, HTTPException
+from typing import Dict, Any
 
-from app.clients.service.ml_models import MLModelManager, MLModelRepository, \
-    InterfaceBaseMLModel
-from app.clients.service.models import PredictionFeatures, PredictionRequest
+from fastapi import APIRouter
+
+from app.clients.schema import PredictionInput
+from app.clients.service.prediction_controller import PredictionController
 
 router = APIRouter(prefix="/ml_models", tags=["model"])
-model_repository = MLModelRepository()
-model_manager = MLModelManager(model_repository)
+
+controller = PredictionController()
 
 
-@router.get("/list")
+@router.get("/list", response_model=Dict[str, Any])
 def list_models():
     """List all available ML models"""
-    # return {"models": model_repository.list_models()}
-    return {"models": [str(model) for model in model_repository.list_models()]}
+    return controller.list_models()
 
 
-@router.post("/switch/{model_name}")
+@router.post("/switch/{model_name}", response_model=Dict[str, str])
 def switch_models(model_name: str):
     """Switch between ML models"""
-    success = model_manager.switch_model(model_name)
-    if not success:
-        raise HTTPException(status_code=400, detail="Model switch failed")
-    return {"message": f"Model switched to {model_name}"}
+    return controller.switch_model(model_name)
 
 
-@router.get("/current")
+@router.get("/current", response_model=Dict[str, str])
 def current_model():
     """Get the current ML model"""
-    # return {"current_model": model_manager.get_current_model()}
-    return {"current_model": str(model_manager.get_current_model())}
+    return controller.get_current_model()
 
 
-@router.post("/predict/{model_name}")
-def predict_with_model_name(features: PredictionFeatures, model_name: str):
-    """Predict based on a given ML model name"""
-    model = model_repository.get_model_instance(model_name)
-    # model.load_if_trained()
-    return predict_model(model, features)
+@router.post("/predict/{model_name}", response_model=Dict[str, Any])
+def predict_with_model_name(input_data: PredictionInput, model_name: str):
+    """
+    Predict based on a given ML model name with intervention recommendations
+    """
+    return controller.predict_with_model(input_data, model_name)
 
 
-@router.post("/predict")
-def predict_with_current_model(features: PredictionFeatures):
-    """Predict based on current ML model"""
-    model = model_manager.get_current_model()
-    # model.load_if_trained()
-    return predict_model(model, features)
+@router.post("/predict", response_model=Dict[str, Any])
+def predict_with_current_model(input_data: PredictionInput):
+    """
+    Predict based on current ML model with intervention recommendations
 
-
-def predict_model(model: InterfaceBaseMLModel, features: PredictionFeatures):
-    """Predict based on given ML model"""
-    model.load_if_trained()
-    prediction_request = PredictionRequest.from_structured_features(features)
-    try:
-        prediction = model.predict(np.array([prediction_request.features]))
-        return {
-            "model": str(model),
-            "input": prediction_request.features,
-            "prediction": prediction.tolist(),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500,
-                            detail=f"Prediction failed: {str(e)}") from e
+    Returns a dict with:
+    - baseline: The baseline success rate without interventions
+    - interventions: A list of [success_rate, intervention_names] pairs
+    """
+    return controller.predict_with_model(input_data)

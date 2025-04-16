@@ -46,36 +46,75 @@ class PredictionInput(BaseModel):
     substance_use: str
     time_unemployed: int
     need_mental_health_support_bool: str
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "age": 55,
+                "gender": "1",
+                "work_experience": 10,
+                "canada_workex": 5,
+                "dep_num": 2,
+                "canada_born": "false",
+                "citizen_status": "true",
+                "level_of_schooling": "8",
+                "fluent_english": "true",
+                "reading_english_scale": 9,
+                "speaking_english_scale": 8,
+                "writing_english_scale": 8,
+                "numeracy_scale": 9,
+                "computer_scale": 10,
+                "transportation_bool": "true",
+                "caregiver_bool": "false",
+                "housing": "5",
+                "income_source": "3",
+                "felony_bool": "false",
+                "attending_school": "false",
+                "currently_employed": "true",
+                "substance_use": "false",
+                "time_unemployed": 0,
+                "need_mental_health_support_bool": "false"
+            }
+        }
+    )
 
 
 class ClientBase(BaseModel):
     age: int = Field(ge=18, description="Age of client, must be 18 or older")
     gender: Gender = Field(description="Gender: 1 for male, 2 for female")
     work_experience: int = Field(ge=0, description="Years of work experience")
-    canada_workex: int = Field(ge=0, description="Years of Canadian work experience")
+    canada_workex: int = Field(ge=0,
+                               description="Years of Canadian work experience")
     dep_num: int = Field(ge=0, description="Number of dependents")
     canada_born: bool = Field(description="Whether client was born in Canada")
     citizen_status: bool = Field(description="Client's citizenship status")
-    level_of_schooling: int = Field(ge=1, le=14, description="Education level (1-14)")
+    level_of_schooling: int = Field(ge=1, le=14,
+                                    description="Education level (1-14)")
     fluent_english: bool = Field(description="English fluency status")
-    reading_english_scale: int = Field(ge=0, le=10, description="English reading level (0-10)")
-    speaking_english_scale: int = Field(ge=0, le=10, description="English speaking level (0-10)")
-    writing_english_scale: int = Field(ge=0, le=10, description="English writing level (0-10)")
-    numeracy_scale: int = Field(ge=0, le=10, description="Numeracy skill level (0-10)")
-    computer_scale: int = Field(ge=0, le=10, description="Computer skill level (0-10)")
+    reading_english_scale: int = Field(ge=0, le=10,
+                                       description="English reading level (0-10)")
+    speaking_english_scale: int = Field(ge=0, le=10,
+                                        description="English speaking level (0-10)")
+    writing_english_scale: int = Field(ge=0, le=10,
+                                       description="English writing level (0-10)")
+    numeracy_scale: int = Field(ge=0, le=10,
+                                description="Numeracy skill level (0-10)")
+    computer_scale: int = Field(ge=0, le=10,
+                                description="Computer skill level (0-10)")
     transportation_bool: bool = Field(description="Has transportation")
     caregiver_bool: bool = Field(description="Is a caregiver")
     housing: int = Field(ge=1, le=10, description="Housing situation (1-10)")
-    income_source: int = Field(ge=1, le=11, description="Source of income (1-11)")
+    income_source: int = Field(ge=1, le=11,
+                               description="Source of income (1-11)")
     felony_bool: bool = Field(description="Has felony record")
     attending_school: bool = Field(description="Currently attending school")
     currently_employed: bool = Field(description="Current employment status")
     substance_use: bool = Field(description="Substance use status")
     time_unemployed: int = Field(ge=0, description="Time unemployed in months")
-    need_mental_health_support_bool: bool = Field(description="Needs mental health support")
+    need_mental_health_support_bool: bool = Field(
+        description="Needs mental health support")
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "age": 25,
                 "gender": 1,
