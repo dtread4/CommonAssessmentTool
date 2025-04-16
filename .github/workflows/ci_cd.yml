@@ -2,10 +2,13 @@ name: CI-CD Pipeline
 
 on:
     push:
-        branches: [ master, main, dev ]
+        branches: [ master, main, dev, test2 ]
 
     pull_request:
         branches: [ master, main ]
+
+    release:
+        types: [ published ]
 
 jobs:
     test_code:
@@ -80,8 +83,8 @@ jobs:
 
             -   name: Run Docker container
                 run: |
-                        docker run -d --name common-assessment-container -p 8000:8000 common-assessment-tool
-                        sleep 10  
+                    docker run -d --name common-assessment-container -p 8000:8000 common-assessment-tool
+                    sleep 10  
 
             -   name: Test Docker container
                 run: |
@@ -111,7 +114,12 @@ jobs:
     # Source for how deployment was set up
     # https://dev.to/s3cloudhub/automate-docker-deployments-push-your-images-to-ec2-with-github-actions-3a3j
     deploy:
-        needs: [test_code, test_docker_setup] # This ensures deploy only runs if tests pass
+        # Only run deploy if all tests pass
+        needs: [ test_code, test_docker_setup ]
+
+        # Only run deploy job when a release is published
+        if: github.event_name == 'release' && github.event.action == 'published'
+
         runs-on: ubuntu-latest
 
         steps:
@@ -126,19 +134,35 @@ jobs:
                 run: |
                     docker build -t common_assessment_tool .
 
-            -   name: Push image to Docker Hub
+            -   name: Tag Docker image with release version
                 run: |
+                    # Tag with the release version
+                    docker tag common_assessment_tool ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:${{ github.event.release.tag_name }}
+                    # Also tag as latest
                     docker tag common_assessment_tool ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
+
+            -   name: Push images to Docker Hub
+                run: |
+                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:${{ github.event.release.tag_name }}
                     docker push ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
 
             -   name: Install SSH Key
                 uses: webfactory/ssh-agent@v0.9.1
                 with:
-                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+                    ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
             -   name: Deploy Docker image to EC2
                 run: |
                     ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_INSTANCE_IP }} << 'EOF'
+                    # Install Docker if not already installed
+                    sudo dnf update -y
+                    sudo dnf install -y docker
+                    sudo systemctl enable docker
+                    sudo systemctl start docker
+                    sudo usermod -aG docker $USER
+                    newgrp docker
+                    
+                    # Deploy container
                     docker pull ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
                     docker stop $(docker ps -a -q) || true
                     docker rm $(docker ps -a -q) || true
@@ -148,12 +172,14 @@ jobs:
             -   name: Print Success Message
                 if: success()
                 run: |
-                    echo "Deployed updates to EC2 instance successfully!"
+                    echo "Deployed release ${{ github.event.release.tag_name }} to EC2 instance successfully!"
                     echo "========================"
                     echo "✓ Code checked out"
                     echo "✓ Logged in to Docker Hub"
                     echo "✓ Docker image built"
-                    echo "✓ Docker image pushed to Docker Hub"
+                    echo "✓ Docker image tagged with release version: ${{ github.event.release.tag_name }}"
+                    echo "✓ Docker images pushed to Docker Hub"
                     echo "✓ Installed EC2 SSH key"
                     echo "✓ Docker image deployed successfully"
+                    echo "✓ EC2 instance updated with latest release"
                     echo "========================"
