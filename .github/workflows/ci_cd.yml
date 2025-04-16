@@ -12,7 +12,7 @@ on:
 
 jobs:
     test_code:
-        if: github.event_name != 'release'
+#        if: github.event_name != 'release'
         runs-on: ubuntu-latest # Use the latest Ubuntu runner
 
         steps:
@@ -62,7 +62,7 @@ jobs:
                     echo "========================"
 
     test_docker_setup:
-        if: github.event_name != 'release'
+#        if: github.event_name != 'release'
         runs-on: ubuntu-latest # Use the latest Ubuntu runner
 
         steps:
@@ -117,7 +117,7 @@ jobs:
     # https://dev.to/s3cloudhub/automate-docker-deployments-push-your-images-to-ec2-with-github-actions-3a3j
     deploy:
         # Only run deploy if all tests pass
-#        needs: [ test_code, test_docker_setup ]
+        needs: [ test_code, test_docker_setup ]
 
         # Only run deploy job when a release is published
         if: github.event_name == 'release' && github.event.action == 'published'
