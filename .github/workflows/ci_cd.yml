@@ -158,9 +158,9 @@ jobs:
                     ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_INSTANCE_IP }} << 'EOF'
                     # Install Docker if not already installed
                     echo "EC2 instance public IP address:"
-                    curl -s http://checkip.amazonaws.com
-                    sudo dnf update -y
-                    sudo dnf install -y docker
+                    curl -s http://169.254.169.254/latest/meta-data/public-ipv4
+                    sudo yum update -y
+                    sudo yum install -y docker
                     sudo systemctl enable docker
                     sudo systemctl start docker
                     sudo usermod -aG docker $USER
