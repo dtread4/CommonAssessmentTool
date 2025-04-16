@@ -116,6 +116,9 @@ jobs:
     # Source for how deployment was set up
     # https://dev.to/s3cloudhub/automate-docker-deployments-push-your-images-to-ec2-with-github-actions-3a3j
     deploy:
+        # Only run deploy if all tests pass
+#        needs: [ test_code, test_docker_setup ]
+
         # Only run deploy job when a release is published
         if: github.event_name == 'release' && github.event.action == 'published'
 
@@ -154,8 +157,8 @@ jobs:
                 run: |
                     ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_INSTANCE_IP }} << 'EOF'
                     # Install Docker if not already installed
-                    echo "EC2 instance local IP address:"
-                    hostname -I
+                    echo "EC2 instance public IP address:"
+                    curl http://checkip.amazonaws.com
                     sudo dnf update -y
                     sudo dnf install -y docker
                     sudo systemctl enable docker
