@@ -157,15 +157,13 @@ jobs:
                 run: |
                     ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_INSTANCE_IP }} << 'EOF'
                     # Install Docker if not already installed
-                    echo "EC2 instance public IP address:"
-                    curl -s http://169.254.169.254/latest/meta-data/public-ipv4
-                    sudo yum update -y
-                    sudo yum install -y docker
+                    sudo apt-get update
+                    sudo apt-get install -y docker.io
                     sudo systemctl enable docker
                     sudo systemctl start docker
                     sudo usermod -aG docker $USER
                     newgrp docker
-                    
+
                     # Deploy container
                     docker pull ${{ secrets.DOCKERHUB_USERNAME }}/common_assessment_tool:latest
                     docker stop $(docker ps -a -q) || true
