@@ -155,6 +155,7 @@ jobs:
                 run: |
                     ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_INSTANCE_IP }} << 'EOF'
                     # Install Docker if not already installed
+                    echo "Connected to EC2 instance at IP: ${{ secrets.EC2_INSTANCE_IP }}"
                     sudo dnf update -y
                     sudo dnf install -y docker
                     sudo systemctl enable docker
